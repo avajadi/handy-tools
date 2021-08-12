@@ -1,0 +1,48 @@
+#!/usr/bin/perl
+use strict;
+use warnings;
+use Image::ExifTool qw(:Public);
+use Path::Class;
+
+my $wd = shift( @ARGV );
+
+if( $wd ) {
+	if( -d $wd ) {
+		chdir( $wd );
+	} else {
+		print STDERR "$wd is not a directory\n";
+	}
+}
+my $current = $ENV{'PWD'};
+my $symlink = 0;
+if( -f '.hashpics-as-symlinks' ) {
+	$symlink = 1;
+	print( "Using symlinks\n" );
+}
+
+my @images = glob( '*.{mov,mp4,avi,jpg,png,gif,nef,3gp,JPG,JPEG,jpeg}' );
+foreach my $image (@images ) {
+	my($year,$month,$day) = $image =~ /([0-9]{4})-([0-9]{2})-([0-9]{2})/;
+	print("Filenamedate:$year,$month,$day\n");
+	unless( $year && $month && $day ) {
+		my $imgInfo = ImageInfo($image);
+		print( "Using exif:", $imgInfo->{DateTimeOriginal}, "\n");#DEBUG
+		($year,$month,$day) = $imgInfo->{DateTimeOriginal} =~ /^([0-9]{4}):([0-9]{2}):([0-9]{2}) /;
+	}
+
+	next unless( $year && $month && $day );
+	my $dir = join ('/',($year,$month,$day));
+	print $image,"\n$dir\n\n";
+	unless( -d $dir ) {
+		`mkdir -p $dir`;
+	}
+	if( $symlink ) {
+		my $current = "/home/Dropbox";
+		my $full = file( "$current/$image" );
+		my $relative = $full->relative( "$current/$dir" );
+
+		`ln -sf $relative $dir`
+	} else {
+		`mv '$image' $dir`;	
+	}
+}
