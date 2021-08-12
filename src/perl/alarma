@@ -1,0 +1,27 @@
+#!/usr/bin/perl
+use strict;
+use warnings;
+
+use Term::ANSIColor qw(:constants);
+
+my $greenPattern = shift;
+my $yellowPattern = shift;
+my $redPattern = shift;
+
+my $green = GREEN;
+my $yellow = YELLOW;
+my $red = RED;
+my $normal = RESET;
+
+while(<>) {
+	if( $greenPattern ) {
+		$_ =~ s/($greenPattern)/$green\1$normal/g;
+	}
+	if( $yellowPattern ) {
+		$_ =~ s/($yellowPattern)/$yellow\1$normal/g;
+	}
+	if( $redPattern ) {
+		$_ =~ s/($redPattern)/$red\1$normal/g;
+	}
+	print $_;
+}
