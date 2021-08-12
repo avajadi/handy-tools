@@ -4,6 +4,10 @@ use warnings;
 use Image::ExifTool qw(:Public);
 use Path::Class;
 
+#TODO Add command line parameters for these
+my $verbose = 0;
+my $symlink = 0;
+
 my $wd = shift( @ARGV );
 
 if( $wd ) {
@@ -14,7 +18,7 @@ if( $wd ) {
 	}
 }
 my $current = $ENV{'PWD'};
-my $symlink = 0;
+
 if( -f '.hashpics-as-symlinks' ) {
 	$symlink = 1;
 	print( "Using symlinks\n" );
@@ -22,17 +26,21 @@ if( -f '.hashpics-as-symlinks' ) {
 
 my @images = glob( '*.{mov,mp4,avi,jpg,png,gif,nef,3gp,JPG,JPEG,jpeg}' );
 foreach my $image (@images ) {
-	my($year,$month,$day) = $image =~ /([0-9]{4})-([0-9]{2})-([0-9]{2})/;
-	print("Filenamedate:$year,$month,$day\n");
-	unless( $year && $month && $day ) {
+	my $hasDate = my($year,$month,$day) = $image =~ /([0-9]{4})-([0-9]{2})-([0-9]{2})/;
+	if($hasDate) {
+		print("Filename date for '$image':$year,$month,$day\n") if($verbose);
+	} else {
 		my $imgInfo = ImageInfo($image);
-		print( "Using exif:", $imgInfo->{DateTimeOriginal}, "\n");#DEBUG
-		($year,$month,$day) = $imgInfo->{DateTimeOriginal} =~ /^([0-9]{4}):([0-9]{2}):([0-9]{2}) /;
+		($year,$month,$day) = $imgInfo->{DateTimeOriginal} =~ /^([0-9]{4}):([0-9]{2}):([0-9]{2}) / if($imgInfo->{DateTimeOriginal});
+		$hasDate = ( $year && $month && $day );
 	}
 
-	next unless( $year && $month && $day );
+	unless( $hasDate ){
+		print STDERR ( "WARNING: No date found for $image\n" );
+		next;
+	}
 	my $dir = join ('/',($year,$month,$day));
-	print $image,"\n$dir\n\n";
+	print($image,"\n$dir\n\n") if($verbose);
 	unless( -d $dir ) {
 		`mkdir -p $dir`;
 	}
