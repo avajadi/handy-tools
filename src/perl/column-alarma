@@ -1,0 +1,95 @@
+#!/usr/bin/perl
+use strict;
+use warnings;
+use Getopt::Long;
+use Pod::Usage;
+use Term::ANSIColor;
+
+
+my $urgent = 90;
+my $alert = 60;
+my $column = 4;
+my $ignorePattern = "^PVC";
+my $direction = "rising";
+my $help = 0;
+
+GetOptions ("c|column=i" => \$column,
+            "u|urgent=i"   => \$urgent,
+            "a|alert=i"  => \$alert,
+            "i|ignorePattern=s" => \$ignorePattern,
+            "d|direction=s" => \$direction,
+            "h|?|help" => \$help)
+or pod2usage(2);
+pod2usage(1) if $help;
+
+
+while(<>) {
+	next if( $ignorePattern && $_ =~ /$ignorePattern/ );
+	my @cols = split / +/;
+	my $use = $cols[$column];
+	$use =~ s/%//;
+	if($direction eq "rising") {
+		if ( $use >= $urgent ) {
+			print color('red');
+		}
+		elsif ( $use >= $alert ) {
+			print color('bright_yellow');
+		} else {
+			print color('bright_green');
+		}
+	}else {
+		if ( $use <= $urgent ) {
+			print color('red');
+		}
+		elsif ( $use <= $alert ) {
+			print color('bright_yellow');
+		} else {
+			print color('bright_green');
+		}		
+	}
+	print($_);
+	print color('reset');
+}
+__END__
+=head1 NAME
+
+column-alarma - decorate lines with color based on values in specific columns
+
+=head1 SYNOPSIS
+
+column-alarma [options]
+
+ Options:
+   -h,-?,--help            brief help message
+   -c,--column <integer>   base colouration on column i. Zero indexed
+   -a,--alert <integer>    minimum value to trigger alert colour (yellow)
+   -d,--direction <string> are we looking for rising or falling values? (rising|falling)
+   -u,--urgent <integer>   minimum value to trigger urgent colour (red)
+
+=head1 OPTIONS
+
+=over 8
+
+=item B<--help>
+
+Print a brief help message and exits.
+
+=item B<--column> <integer>
+
+Base colouration on column i. Zero indexed
+
+=item B<--alert> <integer>
+
+Minimum value to trigger alert colour (yellow)
+
+=item B<--urgent> <integer>
+
+Minimum value to trigger urgent colour (red)
+
+=back
+
+=head1 DESCRIPTION
+
+B<This program> will read incoming data line by line and colour code according to given limits.
+
+=cut
