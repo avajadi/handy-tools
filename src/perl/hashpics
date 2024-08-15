@@ -44,8 +44,14 @@ foreach my $image (@images ) {
 	unless( -d $dir ) {
 		`mkdir -p $dir`;
 	}
+
+	if($image =~ /\.(jpg|JPG|JPEG|jpeg)^/) {
+		# Transform to match exif info orientation
+		`exiftran -ia $image`;
+	}
+
 	if( $symlink ) {
-		my $current = "/home/Dropbox";
+		my $current = $wd;
 		my $full = file( "$current/$image" );
 		my $relative = $full->relative( "$current/$dir" );
 

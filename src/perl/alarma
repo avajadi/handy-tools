@@ -2,26 +2,92 @@
 use strict;
 use warnings;
 
-use Term::ANSIColor qw(:constants);
+use Getopt::Long;
+use Pod::Usage;
+use Term::ANSIColor;
 
-my $greenPattern = shift;
-my $yellowPattern = shift;
-my $redPattern = shift;
+my $greenPattern = 0;
+my $yellowPattern = 0;
+my $redPattern = 0;
+my $lineWise = 0;
+my $help = 0;
+GetOptions ("r|redPattern=s" => \$redPattern,
+            "g|greenPattern=s"   => \$greenPattern,
+            "y|yellowPattern=s"  => \$yellowPattern,
+            "l|lineWise" => \$lineWise,
+            "h|?|help" => \$help)
+or pod2usage(2);
+pod2usage(1) if $help;
 
-my $green = GREEN;
-my $yellow = YELLOW;
-my $red = RED;
-my $normal = RESET;
+
+my $green = color('green');
+my $yellow = color('bright_yellow');
+my $red = color('red');
+my $normal = color('reset');
+
+# Match linewise? Adapt the regexps accordingly
+if( $lineWise ) {
+	$greenPattern = "^.*$greenPattern.*\$" if( $greenPattern );
+	$yellowPattern = "^.*$yellowPattern.*\$" if( $yellowPattern );
+	$redPattern = "^.*$redPattern.*\$" if( $redPattern );
+}
 
 while(<>) {
 	if( $greenPattern ) {
-		$_ =~ s/($greenPattern)/$green\1$normal/g;
+		$_ =~ s/($greenPattern)/$green$1$normal/g;
 	}
 	if( $yellowPattern ) {
-		$_ =~ s/($yellowPattern)/$yellow\1$normal/g;
+		$_ =~ s/($yellowPattern)/$yellow$1$normal/g;
 	}
 	if( $redPattern ) {
-		$_ =~ s/($redPattern)/$red\1$normal/g;
+		$_ =~ s/($redPattern)/$red$1$normal/g;
 	}
 	print $_;
 }
+__END__
+=head1 NAME
+
+alarma - decorate inline with color based on values in specific patterns
+
+=head1 SYNOPSIS
+
+alarma [options]
+
+ Options:
+   -h,-?,--help     brief help message
+   -g,--greenPattern <re pattern>   base green colouration on regex pattern
+   -y,--yellowPattern <re pattern>  base yellow colouration on regex pattern
+   -r,--redPattern <re pattern>     base red colouration on regex pattern
+   -l, --lineWise                   make linewise matches
+
+=head1 OPTIONS
+
+=over 8
+
+=item B<--help>
+
+Print a brief help message and exits.
+
+=item B<--greenPattern> <re pattern>
+
+Base green colouration on regex pattern
+
+=item B<--yellowPattern> <re pattern>
+
+Base yellow colouration on regex pattern
+
+=item B<--redPattern> <re pattern>
+
+Base red colouration on regex pattern
+
+=item B<--lineWise>
+
+Make linewise matches
+
+=back
+
+=head1 DESCRIPTION
+
+B<This program> will read incoming data line by line and colour code according to given limits.
+
+=cut
