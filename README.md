@@ -69,3 +69,9 @@ my $t = Ticker->new;
 $t->init;
 $t->tick while $still_working;
 ```
+
+## License
+
+Copyright (C) 2026 Eddie Bassey Olsson
+
+`src/bash/alarma` is licensed under the GNU General Public License v3.0 — see [LICENSE](LICENSE).
