@@ -1,0 +1,74 @@
+#!/bin/bash
+#
+# alarma - decorate inline with color based on values in specific patterns
+#
+# A bash/sed port of the Perl alarma. Reads stdin line by line and highlights
+# regex matches in green, yellow and red. Patterns use POSIX ERE (sed -E),
+# not PCRE, so features like \d, \b and lookahead are not available.
+
+set -euo pipefail
+
+greenPattern=""
+yellowPattern=""
+redPattern=""
+lineWise=0
+
+usage() {
+	cat <<'EOF'
+alarma - decorate inline with color based on values in specific patterns
+
+Usage: alarma [options]
+
+ Options:
+   -h, -?, --help                    brief help message
+   -g, --greenPattern  <re pattern>  base green colouration on regex pattern
+   -y, --yellowPattern <re pattern>  base yellow colouration on regex pattern
+   -r, --redPattern    <re pattern>  base red colouration on regex pattern
+   -l, --lineWise                    make linewise matches
+
+Patterns use POSIX ERE (sed -E), not PCRE.
+EOF
+}
+
+while [[ $# -gt 0 ]]; do
+	case "$1" in
+		-g|--greenPattern)  greenPattern="$2"; shift 2;;
+		-y|--yellowPattern) yellowPattern="$2"; shift 2;;
+		-r|--redPattern)    redPattern="$2"; shift 2;;
+		-l|--lineWise)      lineWise=1; shift;;
+		-h|-\?|--help)      usage; exit 0;;
+		*) echo "Unknown option: $1" >&2; usage >&2; exit 2;;
+	esac
+done
+
+# ANSI colors
+green=$'\033[32m'
+yellow=$'\033[93m'
+red=$'\033[31m'
+normal=$'\033[0m'
+
+# Priority: -r overrides -y overrides -g.
+if [[ $lineWise -eq 1 ]]; then
+	# Linewise: each line gets exactly one colour, picked by the
+	# highest-priority pattern it matches. No nesting, so priority is exact.
+	while IFS= read -r line || [[ -n "$line" ]]; do
+		if   [[ -n "$redPattern"    && "$line" =~ $redPattern ]];    then printf '%s%s%s\n' "$red"    "$line" "$normal"
+		elif [[ -n "$yellowPattern" && "$line" =~ $yellowPattern ]]; then printf '%s%s%s\n' "$yellow" "$line" "$normal"
+		elif [[ -n "$greenPattern"  && "$line" =~ $greenPattern ]];  then printf '%s%s%s\n' "$green"  "$line" "$normal"
+		else printf '%s\n' "$line"
+		fi
+	done
+else
+	# Inline: wrap each match in colour. Apply red last so that, where matches
+	# overlap, its code sits innermost (closest to the text) and wins.
+	script=""
+	[[ -n "$greenPattern" ]]  && script+="s/($greenPattern)/$green\\1$normal/g;"
+	[[ -n "$yellowPattern" ]] && script+="s/($yellowPattern)/$yellow\\1$normal/g;"
+	[[ -n "$redPattern" ]]    && script+="s/($redPattern)/$red\\1$normal/g;"
+
+	if [[ -z "$script" ]]; then
+		cat
+	else
+		sed -E "$script"
+	fi
+fi

@@ -27,6 +27,14 @@ tail -f app.log | alarma -g OK -y WARN -r ERROR
 - `-r`, `--redPattern` — pattern to highlight red
 - `-l`, `--lineWise` — color the whole line containing a match, not just the match
 
+### `src/bash/alarma`
+
+A dependency-free bash/`sed` port of the Perl `alarma`, with the same options. Where patterns overlap, colors have a priority order: `-r` overrides `-y` overrides `-g`. Patterns use POSIX ERE rather than PCRE, so PCRE-only features (`\d`, `\b`, lookahead, non-greedy) aren't available — for those, use the Perl version.
+
+```sh
+tail -f app.log | src/bash/alarma -g OK -y WARN -r ERROR
+```
+
 ### `src/perl/column-alarma`
 
 A column-aware variant of `alarma`. Colors whole lines based on the numeric value in a chosen column, e.g. for flagging high usage in `df`-style output.
